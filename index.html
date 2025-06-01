@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>%UNITY_WEB_NAME%</title>
+    <title>0531 WebAR</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
     <style>
       html, body {
@@ -24,17 +24,17 @@
   </head>
   <body>
     <canvas id="unity-canvas"></canvas>
-    <script src="%UNITY_WEBGL_LOADER_URL%"></script>
+    <script src="Build/0531webar.loader.js"></script>
     <script>
       createUnityInstance(document.querySelector("#unity-canvas"), {
-        dataUrl: "%UNITY_WEBGL_DATA_URL%",
-        frameworkUrl: "%UNITY_WEBGL_FRAMEWORK_URL%",
-        codeUrl: "%UNITY_WEBGL_CODE_URL%",
+        dataUrl: "Build/0531webar.data",
+        frameworkUrl: "Build/0531webar.framework.js",
+        codeUrl: "Build/0531webar.wasm",
         streamingAssetsUrl: "StreamingAssets",
-        companyName: "%COMPANY_NAME%",
-        productName: "%PRODUCT_NAME%",
-        productVersion: "%PRODUCT_VERSION%",
-        backgroundColor: [0, 0, 0, 0] // alpha = 0 表示透明
+        companyName: "MyCompany",
+        productName: "0531WebAR",
+        productVersion: "1.0",
+        backgroundColor: [0, 0, 0, 0]
       });
     </script>
   </body>
