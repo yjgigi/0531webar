@@ -17,14 +17,14 @@
           height: 100vh;
         }
       
-        /* #video-preview {
+        #video-preview {
           position: fixed;
           top: 0;
           left: 0;
           width: 100vw;
           height: 100vh;
           object-fit: cover;
-        } */
+        }
 
       
         #unity-canvas {
@@ -76,10 +76,17 @@
         video.onloadedmetadata = () => {
           console.log("相機原始尺寸:", video.videoWidth, video.videoHeight);
 
-          // ✅ 確保 Unity Canvas 對應螢幕尺寸
           const canvas = document.getElementById("unity-canvas");
-          canvas.width = window.innerWidth;
-          canvas.height = window.innerHeight;
+
+          function resizeCanvas() {
+            canvas.style.width = "100vw";
+            canvas.style.height = "100vh";
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+          }
+
+          window.addEventListener("resize", resizeCanvas);
+          resizeCanvas(); // 頁面初始就執行一次
         };
       })
       .catch((err) => {
