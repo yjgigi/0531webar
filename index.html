@@ -1,48 +1,64 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <title>WebAR Overlay</title>
-  <meta name="viewport" content="width=device-width, user-scalable=no" />
-  <style>
-    body, html {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      background: black;
-    }
-    #camera-bg {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw;
-      height: 100vh;
-      object-fit: cover;
-      z-index: 0;
-    }
-    #unityContainer {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      z-index: 1;
-      pointer-events: none; /* 如果 Unity 不需要點擊就設為 none */
-    }
-  </style>
-</head>
-<body>
-  <video id="camera-bg" autoplay playsinline muted></video>
-  <div id="unityContainer"></div>
-  <script>
-    const video = document.getElementById('camera-bg');
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-      .then(stream => {
-        video.srcObject = stream;
-      }).catch(e => {
-        alert("無法啟用相機");
-        console.error(e);
+  <head>
+    <meta charset="utf-8" />
+    <title>0531 WebAR</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        height: 100%;
+        width: 100%;
+      }
+
+      #video-preview {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: 0;
+      }
+
+      #unity-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 1;
+        pointer-events: none; /* 保持手機觸控給下面 */
+      }
+
+      canvas#unity-canvas {
+        width: 100%;
+        height: 100%;
+        background-color: transparent !important;
+        display: block;
+      }
+
+    </style>
+  </head>
+  <body>
+    <canvas id="unity-canvas"></canvas>
+    <video id="video-preview" autoplay playsinline muted style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1;"></video>
+
+
+    <script src="Build/0531webar.loader.js"></script>
+    <script>
+      createUnityInstance(document.querySelector("#unity-canvas"), {
+        dataUrl: "Build/0531webar.data",
+        frameworkUrl: "Build/0531webar.framework.js",
+        codeUrl: "Build/0531webar.wasm",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "MyCompany",
+        productName: "0531WebAR",
+        productVersion: "1.0",
+        backgroundColor: [0, 0, 0, 0]
       });
-  </script>
-  <!-- Unity 載入腳本由 Unity 自動生成 -->
-</body>
+    </script>
+  </body>
 </html>
