@@ -14,7 +14,7 @@
           overflow: hidden;
           background: black;
           width: 100vw;
-          /* height: 100vh; */
+          height: 100vh;
         }
       
         #video-preview {
@@ -22,9 +22,8 @@
           top: 0;
           left: 0;
           width: 100vw;
-          /* height: 100vh; */
-          object-fit: cover; /* ✅ 核心設定 */
-          z-index: 0;
+          height: 100vh;
+          object-fit: cover;
         }
 
       
@@ -34,7 +33,7 @@
           left: 0;
           z-index: 1;
           width: 100vw;
-          /* height: 100vh; */
+          height: 100vh;
           background-color: transparent !important;
           display: block;
         }
@@ -63,23 +62,31 @@
     <script>
       const video = document.getElementById("video-preview");
 
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false })
-        .then((stream) => {
-          video.srcObject = stream;
+      navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: "environment" },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        },
+        audio: false
+      })
+      .then((stream) => {
+        video.srcObject = stream;
 
-          video.onloadedmetadata = () => {
-            console.log("相機原始尺寸:", video.videoWidth, video.videoHeight);
+        video.onloadedmetadata = () => {
+          console.log("相機原始尺寸:", video.videoWidth, video.videoHeight);
 
-            // 為了保險，你也可以手動讓 canvas 填滿螢幕
-            const canvas = document.getElementById("unity-canvas");
-            canvas.width = window.innerWidth;
-            // canvas.height = window.innerHeight;
-          };
-        })
-        .catch((err) => {
-          console.error("相機啟動失敗:", err);
-        });
+          // ✅ 確保 Unity Canvas 對應螢幕尺寸
+          const canvas = document.getElementById("unity-canvas");
+          canvas.width = window.innerWidth;
+          canvas.height = window.innerHeight;
+        };
+      })
+      .catch((err) => {
+        console.error("相機啟動失敗:", err);
+      });
     </script>
+
 
 
   </body>
