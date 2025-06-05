@@ -73,8 +73,19 @@
 
     <script>
       const video = document.getElementById("video-preview");
+      const canvas = document.getElementById("unity-canvas");
+
       let currentStream;
       let currentDeviceId = null;
+
+      function resizeCanvas() {
+        canvas.style.width = "100vw";
+        canvas.style.height = "100vh";
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+
+      window.addEventListener("resize", resizeCanvas);
 
       function startCamera(deviceId = null) {
         const constraints = {
@@ -92,20 +103,9 @@
             video.srcObject = stream;
             const track = stream.getVideoTracks()[0];
             currentDeviceId = track.getSettings().deviceId;
-            console.log("啟用裝置:", currentDeviceId);
 
             video.onloadedmetadata = () => {
-              const canvas = document.getElementById("unity-canvas");
-
-              function resizeCanvas() {
-                canvas.style.width = "100vw";
-                canvas.style.height = "100vh";
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
-              }
-
-              window.addEventListener("resize", resizeCanvas);
-              resizeCanvas();
+              resizeCanvas(); // ✅ 每次載入新鏡頭都調整 canvas 尺寸
             };
           })
           .catch((err) => {
@@ -113,7 +113,6 @@
           });
       }
 
-      // 切換鏡頭
       async function switchCamera() {
         const devices = await navigator.mediaDevices.enumerateDevices();
         const videoDevices = devices.filter(d => d.kind === "videoinput");
@@ -127,14 +126,12 @@
         const nextIndex = (currentIndex + 1) % videoDevices.length;
         const nextDeviceId = videoDevices[nextIndex].deviceId;
 
-        console.log("切換至裝置:", nextDeviceId);
-        startCamera(nextDeviceId);
+        startCamera(nextDeviceId); // ✅ 自動 resize
       }
 
       document.getElementById("switchCameraButton").addEventListener("click", switchCamera);
-
-      // 初始啟動
       startCamera();
     </script>
+
   </body>
 </html>
