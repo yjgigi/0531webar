@@ -1,74 +1,130 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
-    <title>0531 WebAR</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+<head>
+  <meta charset="utf-8">
+  <title>WebAR with Camera Toggle</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: transparent;
+    }
+    #cameraFeed {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      z-index: 0;
+    }
+    #unity-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 1;
+      pointer-events: none; /* 避免遮擋互動 */
+    }
+    #deviceSelectContainer {
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.5);
+      color: white;
+      padding: 8px;
+      border-radius: 6px;
+      z-index: 2;
+    }
+  </style>
+</head>
+<body>
+  <!-- 攝影機畫面 -->
+  <video id="cameraFeed" autoplay playsinline muted></video>
 
-    <style>
-      html, body {
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-        background: black;
-        width: 100vw;
-        height: 100vh;
+  <!-- Unity 畫面 -->
+  <div id="unity-container">
+    <canvas id="unity-canvas" style="background-color: transparent;"></canvas>
+  </div>
+
+  <!-- 鏡頭選擇 UI -->
+  <div id="deviceSelectContainer">
+    <label for="deviceSelect">切換鏡頭：</label>
+    <select id="deviceSelect"></select>
+  </div>
+
+  <script>
+    let currentStream = null;
+
+    async function startCamera(deviceId = null) {
+      if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
       }
 
-      #unity-canvas {
-        position: fixed;
-        top: 0;
-        left: 0;
-        z-index: 1;
-        width: 100vw;
-        height: 100vh;
-        background-color: transparent !important;
-        display: block;
-      }
-
-      #switchCameraButton {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        z-index: 9999;
-        background-color: rgba(255, 255, 255, 0.8);
-        border: none;
-        padding: 10px 16px;
-        border-radius: 8px;
-        font-size: 14px;
-        cursor: pointer;
-      }
-    </style>
-  </head>
-
-  <body>
-    <canvas id="unity-canvas"></canvas>
-    <button id="switchCameraButton">切換鏡頭</button>
-
-    <script src="Build/0531webar.loader.js"></script>
-    <script>
-      createUnityInstance(document.querySelector("#unity-canvas"), {
-        dataUrl: "Build/0531webar.data",
-        frameworkUrl: "Build/0531webar.framework.js",
-        codeUrl: "Build/0531webar.wasm",
-        streamingAssetsUrl: "StreamingAssets",
-        companyName: "MyCompany",
-        productName: "0531WebAR",
-        productVersion: "1.0",
-        backgroundColor: [0, 0, 0, 0]
-      });
-    </script>
-
-    <script>
-      document.getElementById("switchCameraButton").addEventListener("click", function () {
-        if (typeof SwitchCamera === "function") {
-          SwitchCamera(); // 呼叫 jslib 中的函數
-        } else {
-          console.warn("SwitchCamera 尚未定義");
+      const constraints = {
+        audio: false,
+        video: {
+          facingMode: "environment", // 預設為後鏡頭
+          deviceId: deviceId ? { exact: deviceId } : undefined
         }
+      };
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        const video = document.getElementById('cameraFeed');
+        video.srcObject = stream;
+        currentStream = stream;
+        console.log("啟用裝置:", deviceId || "[預設裝置]");
+      } catch (err) {
+        console.error("無法啟動攝影機:", err);
+      }
+    }
+
+    async function listDevices() {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter(device => device.kind === 'videoinput');
+
+      const select = document.getElementById('deviceSelect');
+      select.innerHTML = '';
+      videoDevices.forEach((device, index) => {
+        const option = document.createElement('option');
+        option.value = device.deviceId;
+        option.text = device.label || `鏡頭 ${index + 1}`;
+        select.appendChild(option);
       });
-    </script>
-  </body>
+
+      // 自動啟動第一個
+      if (videoDevices.length > 0) {
+        await startCamera(videoDevices[0].deviceId);
+        select.value = videoDevices[0].deviceId;
+      }
+    }
+
+    document.getElementById('deviceSelect').addEventListener('change', (e) => {
+      const selectedDeviceId = e.target.value;
+      console.log("切換至裝置:", selectedDeviceId);
+      startCamera(selectedDeviceId);
+    });
+
+    // 啟動攝影機與裝置列表
+    listDevices();
+  </script>
+
+  <!-- 載入 Unity WebGL -->
+  <script src="Build/your-unity-loader.js"></script>
+  <script>
+    createUnityInstance(document.querySelector("#unity-canvas"), {
+      dataUrl: "Build/your-unity.data",
+      frameworkUrl: "Build/your-unity.framework.js",
+      codeUrl: "Build/your-unity.wasm",
+      streamingAssetsUrl: "StreamingAssets",
+      companyName: "YourCompany",
+      productName: "YourProduct",
+      productVersion: "1.0",
+      backgroundColor: [0, 0, 0, 0],
+    });
+  </script>
+</body>
 </html>
