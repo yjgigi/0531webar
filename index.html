@@ -1,137 +1,141 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
+<head>
+  <meta charset="utf-8" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>0531 WebAR</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: black;
+      width: 100vw;
+      height: 100vh;
+    }
 
-    <title>0531 WebAR</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-    <style>
-      html, body {
-        margin: 0;
-        padding: 0;
-        overflow: hidden;
-        background: black;
-        width: 100vw;
-        height: 100vh;
+    #video-preview {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      z-index: -1;
+    }
+
+    #unity-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 1;
+      width: 100vw;
+      height: 100vh;
+      background-color: transparent !important;
+      display: block;
+    }
+
+    #switchCameraButton {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 9999;
+      background-color: rgba(255, 255, 255, 0.8);
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <video id="video-preview" autoplay playsinline muted></video>
+  <canvas id="unity-canvas"></canvas>
+  <button id="switchCameraButton">切換鏡頭</button>
+
+  <script src="Build/0531webar.loader.js"></script>
+  <script>
+    let unityInstance = null;
+
+    createUnityInstance(document.querySelector("#unity-canvas"), {
+      dataUrl: "Build/0531webar.data",
+      frameworkUrl: "Build/0531webar.framework.js",
+      codeUrl: "Build/0531webar.wasm",
+      streamingAssetsUrl: "StreamingAssets",
+      companyName: "MyCompany",
+      productName: "0531WebAR",
+      productVersion: "1.0",
+      backgroundColor: [0, 0, 0, 0]
+    }).then(instance => {
+      unityInstance = instance;
+    });
+  </script>
+
+  <script>
+    const video = document.getElementById("video-preview");
+    const canvas = document.getElementById("unity-canvas");
+
+    let currentStream = null;
+    let usingFrontCamera = false; // ✅ 只在前後鏡頭切換
+
+    function resizeCanvas() {
+      canvas.style.width = "100vw";
+      canvas.style.height = "100vh";
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    window.addEventListener("resize", resizeCanvas);
+
+    async function startCamera(useFront = false) {
+      usingFrontCamera = useFront;
+
+      const constraints = {
+        video: {
+          facingMode: useFront ? "user" : "environment"
+        },
+        audio: false
+      };
+
+      if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
       }
 
-      #video-preview {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        object-fit: cover;
-        z-index: -1;
-      }
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        currentStream = stream;
+        video.srcObject = stream;
 
-      #unity-canvas {
-        position: fixed;
-        top: 0;
-        left: 0;
-        z-index: 1;
-        width: 100vw;
-        height: 100vh;
-        background-color: transparent !important;
-        display: block;
-      }
+        const track = stream.getVideoTracks()[0];
+        console.log("啟動鏡頭:", track.getSettings());
 
-      #switchCameraButton {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        z-index: 9999;
-        background-color: rgba(255, 255, 255, 0.8);
-        border: none;
-        padding: 10px 16px;
-        border-radius: 8px;
-        font-size: 14px;
-        cursor: pointer;
-      }
-    </style>
-  </head>
-  <body>
-    <video id="video-preview" autoplay playsinline muted></video>
-    <canvas id="unity-canvas"></canvas>
-    <button id="switchCameraButton">切換鏡頭</button>
-
-    <script src="Build/0531webar.loader.js"></script>
-    <script>
-      createUnityInstance(document.querySelector("#unity-canvas"), {
-        dataUrl: "Build/0531webar.data",
-        frameworkUrl: "Build/0531webar.framework.js",
-        codeUrl: "Build/0531webar.wasm",
-        streamingAssetsUrl: "StreamingAssets",
-        companyName: "MyCompany",
-        productName: "0531WebAR",
-        productVersion: "1.0",
-        backgroundColor: [0, 0, 0, 0]
-      });
-    </script>
-
-    <script>
-      const video = document.getElementById("video-preview");
-      const canvas = document.getElementById("unity-canvas");
-
-      let currentStream;
-      let currentDeviceId = null;
-
-      function resizeCanvas() {
-        canvas.style.width = "100vw";
-        canvas.style.height = "100vh";
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-      }
-
-      window.addEventListener("resize", resizeCanvas);
-
-      function startCamera(deviceId = null) {
-        const constraints = {
-          video: deviceId ? { deviceId: { exact: deviceId } } : { facingMode: { ideal: "environment" } },
-          audio: false
+        video.onloadedmetadata = () => {
+          resizeCanvas();
         };
 
-        if (currentStream) {
-          currentStream.getTracks().forEach(track => track.stop());
-        }
+        // ✅ 可選：通知 Unity 重新初始化背景
+        setTimeout(() => {
+          if (unityInstance) {
+            unityInstance.SendMessage("BackgroundManager", "OnCameraSwitch", "");
+          }
+        }, 500);
 
-        navigator.mediaDevices.getUserMedia(constraints)
-          .then((stream) => {
-            currentStream = stream;
-            video.srcObject = stream;
-            const track = stream.getVideoTracks()[0];
-            currentDeviceId = track.getSettings().deviceId;
-
-            video.onloadedmetadata = () => {
-              resizeCanvas(); // ✅ 每次載入新鏡頭都調整 canvas 尺寸
-            };
-          })
-          .catch((err) => {
-            console.error("相機啟動失敗:", err);
-          });
+      } catch (err) {
+        console.error("相機啟動失敗:", err);
       }
+    }
 
-      async function switchCamera() {
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const videoDevices = devices.filter(d => d.kind === "videoinput");
+    function switchCamera() {
+      startCamera(!usingFrontCamera);
+    }
 
-        if (videoDevices.length <= 1) {
-          console.warn("只找到一個鏡頭，無法切換");
-          return;
-        }
+    document.getElementById("switchCameraButton").addEventListener("click", switchCamera);
 
-        const currentIndex = videoDevices.findIndex(d => d.deviceId === currentDeviceId);
-        const nextIndex = (currentIndex + 1) % videoDevices.length;
-        const nextDeviceId = videoDevices[nextIndex].deviceId;
-
-        startCamera(nextDeviceId); // ✅ 自動 resize
-      }
-
-      document.getElementById("switchCameraButton").addEventListener("click", switchCamera);
-      startCamera();
-    </script>
-
-  </body>
+    // ✅ 預設啟用後鏡頭
+    startCamera(false);
+  </script>
+</body>
 </html>
