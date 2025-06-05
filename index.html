@@ -113,15 +113,14 @@
         console.log("啟動鏡頭:", track.getSettings());
 
         video.onloadedmetadata = () => {
-          resizeCanvas();
-        };
+          resizeCanvas(); // 🟢 調整 HTML Canvas 尺寸
 
-        // ✅ 可選：通知 Unity 重新初始化背景
-        setTimeout(() => {
-          if (unityInstance) {
+          // 傳給 Unity，讓 BackgroundManager 執行後續邏輯（如重抓 video 紋理貼圖等）
+          if (typeof unityInstance !== 'undefined') {
             unityInstance.SendMessage("BackgroundManager", "OnCameraSwitch", "");
           }
-        }, 500);
+        };
+
 
       } catch (err) {
         console.error("相機啟動失敗:", err);
